@@ -73,6 +73,18 @@ Route::post('/devis/{id}/update', [App\Http\Controllers\ProductController::class
 Route::post('/devis/{id}/envoyer-mail', [App\Http\Controllers\ProductController::class,  'envoyerParMail']);
 Route::get('/devis/{id}', [App\Http\Controllers\ProductController::class,  'getDevisById']);
 
+Route::get('/factures', [App\Http\Controllers\FactureController::class, 'index']);
+Route::post('/factures', [App\Http\Controllers\FactureController::class, 'store']);
+Route::get('/factures/{id}', [App\Http\Controllers\FactureController::class, 'show']);
+Route::put('/factures/{id}', [App\Http\Controllers\FactureController::class, 'update']);
+Route::delete('/factures/{id}', [App\Http\Controllers\FactureController::class, 'destroy']);
+
+
+
+
+Route::get('/avoirs', [App\Http\Controllers\AvoirController::class, 'index']);
+Route::post('/avoirs', [App\Http\Controllers\AvoirController::class, 'store']);
+
 Route::get('/searchproducts', [App\Http\Controllers\ProductController::class, 'searchProducts']);
 
 Route::get('/services', [App\Http\Controllers\ServiceController::class, 'index']);
