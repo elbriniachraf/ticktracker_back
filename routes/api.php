@@ -58,6 +58,7 @@ Route::post('/contacts', [App\Http\Controllers\ContactController::class, 'store'
 Route::get('/products', [App\Http\Controllers\ProductController::class, 'index']);
 Route::post('/products/delete', [App\Http\Controllers\ProductController::class, 'destroy'])->name('products.delete');
 Route::post('/products', [App\Http\Controllers\ProductController::class, 'store']);
+Route::get('/products/{id}', [App\Http\Controllers\ProductController::class, 'getProduct'])->name('products.show'); // Récupérer un produit par ID
 
 
 Route::get('/categories', [App\Http\Controllers\CategoryController::class, 'index']);
