@@ -5,41 +5,77 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Devis;
 use App\Models\Client;
+use App\Models\Category; // Assurez-vous d'importer le modèle Category
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\DevisMail;
+use App\Mail\DevisMail; // Assurez-vous d'importer la classe DevisMail
+use Illuminate\Support\Facades\DB; // Assure-toi d'importer DB
 
 class ProductController extends Controller
 {
-    // Fonction pour récupérer les produits
-    public function index(Request $request)
-    {
-        $query = Product::query();
+    // Fonction pour récupérer les produits avec la description de la catégorie
 
-        // Pagination
-        $pageSize = $request->get('pageSize', 10);
+public function index(Request $request)
+{
+    $query = Product::query();
 
-        // Filtrage par type de produit
-        if ($request->has('product_type')) {
-            $query->where('product_type', $request->get('product_type'));
-        }
+    // Pagination
+    $pageSize = $request->get('pageSize', 10);
 
-        // Filtrage par recherche (query)
-        if ($request->has('query')) {
-            $search = $request->get('query');
-            $query->where(function ($q) use ($search) {
-                $q->where('label', 'like', "%$search%")
-                  ->orWhere('description', 'like', "%$search%")
-                  ->orWhere('reference', 'like', "%$search%");
-            });
-        }
+    // Filtrage par type de produit
+    // if ($request->has('product_type')) {
+    //     $query->where('product_type', $request->get('product_type'));
+    // }
 
-        // Pagination et résultats
-        $products = $query->paginate($pageSize);
+    // // Filtrage par recherche (query)
+    // if ($request->has('query')) {
+    //     $search = $request->get('query');
+    //     $query->where(function ($q) use ($search) {
+    //         $q->where('label', 'like', "%$search%")
+    //             ->orWhere('description', 'like', "%$search%")
+    //             ->orWhere('reference', 'like', "%$search%");
+    //     });
+    // }
+ // Filtrage par type de produit
+ if ($request->has('product_type')) {
+    $query->where('product_type', $request->get('product_type'));
+}
 
-        return response()->json($products);
-    }
+// Filtrage par recherche (query)
+if ($request->has('query')) {
+    $search = $request->get('query');
+    $query->where(function ($q) use ($search) {
+        $q->where('label', 'like', "%$search%")
+          ->orWhere('reference', 'like', "%$search%");
+    });
+}
+    // Sélection des colonnes y compris la catégorie (sans relation)
+    $products = $query->select(
+        'id', 
+        'reference', 
+        'label', 
+        'price', 
+        'selling_price', 
+        'height', 
+        'length',
+        'weight',
+        'width',
+        'category',
+        'description',
+        DB::raw('category as category_name') // Assure-toi que 'category' est bien une colonne dans la table `products`
+    )->paginate($pageSize);
+
+    // Retourner les produits au format JSON
+    return response()->json($products);
+}
+
+
+    // Récupérer la relation 'category' dans le modèle Product
+    // Vous devez vous assurer que la relation 'category' est définie dans le modèle Product
+    // public function category()
+    // {
+    //     return $this->belongsTo(Category::class, 'category_id'); // Assurez-vous que 'category_id' est la bonne clé étrangère
+    // }
 
     // Fonction pour supprimer un produit
     public function destroy(Request $request)
@@ -59,7 +95,7 @@ class ProductController extends Controller
         return response()->json(['message' => 'Produit supprimé avec succès.'], 200);
     }
 
-
+    // Fonction pour mettre à jour un devis
     public function mettreAJourDevis(Request $request, $id)
     {
         $devis = Devis::findOrFail($id);
@@ -72,15 +108,13 @@ class ProductController extends Controller
         ], 200);
     }
 
-    /**
-     * Envoyer un devis par mail.
-     */
-    public function envoyerParMail(Request $request ,$id)
+    // Fonction pour envoyer un devis par mail
+    public function envoyerParMail(Request $request, $id)
     {
         $devis = Devis::findOrFail($id);
 
-        $client=Client::where('_id',$devis->client_id)->first();
-    
+        $client = Client::where('_id', $devis->client_id)->first();
+
         $clientEmail = $client->email; // Assurez-vous que l'email est stocké
 
         if (!$clientEmail) {
@@ -91,13 +125,11 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Le devis a été envoyé par mail avec succès.',
-            'client'=>$client
+            'client' => $client
         ], 200);
     }
 
-    /**
-     * Récupérer un devis par ID.
-     */
+    // Fonction pour récupérer un devis par ID
     public function getDevisById($id)
     {
         $devis = Devis::findOrFail($id);
@@ -107,43 +139,48 @@ class ProductController extends Controller
     // Fonction pour ajouter un produit
     public function store(Request $request)
     {
-        // Validation des données
-        $validatedData = $request->validate([
-            'reference' => 'required|string|max:255|unique:products,reference',
-            'label' => 'required|string|max:255',
-            'price' => 'required|numeric',
-            'selling_price' => 'required|numeric',
-            'is_selling' => 'nullable|boolean',
-            'is_purchasing' => 'nullable|boolean',
-            'description' => 'nullable|string',
-            'public_url' => 'nullable|url',
-            'product_type' => 'nullable|string|max:100',
-            'weight' => 'nullable|numeric|min:0',
-            'dimensions' => 'nullable|array', // Assurez-vous que c'est un tableau (JSON)
-            'length' => 'nullable|numeric|min:0',
-            'width' => 'nullable|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-            'surface' => 'nullable|numeric|min:0',
-            'volume' => 'nullable|numeric|min:0',
-            'customs_code' => 'nullable|string|max:20',
-            'country_of_origin' => 'nullable|string|max:100',
-            'state_of_origin' => 'nullable|string|max:100',
-            'note' => 'nullable|string',
-            'category' => 'nullable|string',
-            'tags' => 'nullable|array', // Assurez-vous que c'est un tableau (JSON)
-            'min_selling_price' => 'nullable|numeric|min:0',
-            'tax_rate' => 'nullable|numeric|min:0|max:100',
-        ]);
-
-        // Création du produit
-        $product = Product::create($validatedData);
-
-        return response()->json([
-            'message' => 'Produit ajouté avec succès',
-            'product' => $product
-        ], 201);
+        try {
+            $validatedData = $request->validate([
+                'reference' => 'required|string|max:255|unique:products,reference',
+                'label' => 'required|string|max:255',
+                'price' => 'required|numeric',
+                'selling_price' => 'required|numeric',
+                'is_purchasing' => 'nullable|boolean',
+                'description' => 'nullable|string',
+                'public_url' => 'nullable|url',
+                'product_type' => 'nullable|string|max:100',
+                'weight' => 'nullable|numeric|min:0',
+                'dimensions' => 'nullable|array',
+                'length' => 'nullable|numeric|min:0',
+                'width' => 'nullable|numeric|min:0',
+                'height' => 'nullable|numeric|min:0',
+                'surface' => 'nullable|numeric|min:0',
+                'volume' => 'nullable|numeric|min:0',
+                'customs_code' => 'nullable|string|max:20',
+                'country_of_origin' => 'nullable|string|max:100',
+                'state_of_origin' => 'nullable|string|max:100',
+                'note' => 'nullable|string',
+                'category' => 'nullable|string',
+                'tags' => 'nullable|array',
+                'min_selling_price' => 'nullable|numeric|min:0',
+                'tax_rate' => 'nullable|numeric|min:0|max:100',
+            ]);
+    
+            $product = Product::create($validatedData);
+    
+            return response()->json([
+                'message' => 'Produit ajouté avec succès',
+                'product' => $product
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Erreur de validation',
+                'errors' => $e->errors()
+            ], 422);
+        }
     }
-
+    
+    // Méthode pour rechercher des produits
     public function searchProducts(Request $request)
     {
         // Récupérer le terme de recherche
@@ -156,24 +193,24 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
+    // Méthode pour récupérer tous les devis
+    public function indexDevis(Request $request)
+    {
+        // Si tu veux ajouter un filtre basé sur un paramètre GET comme 'client'
+        $query = Devis::query();
 
-     // Méthode pour récupérer tous les devis
-     public function indexDevis(Request $request)
-     {
-         // Si tu veux ajouter un filtre basé sur un paramètre GET comme 'client'
-         $query = Devis::query();
- 
-         // Si le paramètre 'client' est passé dans la requête, filtrer les devis par client
-         if ($request->has('client')) {
-             $query->where('client', 'like', '%' . $request->client . '%');
-         }
- 
-         // Récupérer tous les devis
-         $devis = $query->get();
- 
-         return response()->json($devis);
-     }
+        // Si le paramètre 'client' est passé dans la requête, filtrer les devis par client
+        if ($request->has('client')) {
+            $query->where('client', 'like', '%' . $request->client . '%');
+        }
 
+        // Récupérer tous les devis
+        $devis = $query->get();
+
+        return response()->json($devis);
+    }
+
+    // Fonction pour stocker un devis
     public function storeDevis(Request $request)
     {
         // Validation des données
@@ -204,5 +241,16 @@ class ProductController extends Controller
         ]);
 
         return response()->json($devis, 201); // Retourner le devis créé avec un code de succès 201
+    }
+
+    public function getProduct($id)
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Produit non trouvé'], 404);
+        }
+
+        return response()->json($product);
     }
 }

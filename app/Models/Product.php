@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 
 class Product extends Model
@@ -35,4 +35,10 @@ class Product extends Model
         'min_selling_price',
         'tax_rate',
     ];
+   
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id'); 
+    }
+    
 }

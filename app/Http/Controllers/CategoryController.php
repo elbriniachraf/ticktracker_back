@@ -7,21 +7,25 @@ use Illuminate\Http\Request;
 class CategoryController extends Controller
 {
     // Ajouter une nouvelle catégorie
+  
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+        // Validation des données envoyées depuis le client
+        $validated = $request->validate([
+            'name' => 'required|string|max:255', // Obligatoire
+            'description' => 'nullable|string|max:500', // Facultatif
         ]);
-
+    
+        // Création de la catégorie avec les données validées
         $category = Category::create([
-            'name' => $request->name,
-            'description' => $request->description,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null, // Si description est vide, cela reste null
         ]);
-
-        return response()->json(['message' => 'Catégorie ajoutée avec succès', 'category' => $category], 201);
+    
+        // Retourner la catégorie nouvellement créée
+        return response()->json($category, 201);
     }
-
+    
     // Récupérer toutes les catégories
     public function index()
     {
