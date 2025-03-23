@@ -35,7 +35,8 @@ class Product extends Model
         'min_selling_price',
         'tax_rate',
     ];
-   
+
+
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id'); 

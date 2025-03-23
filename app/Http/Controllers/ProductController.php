@@ -253,4 +253,90 @@ if ($request->has('query')) {
 
         return response()->json($product);
     }
+    public function update(Request $request, $id)
+{
+    // Trouver le produit à modifier
+    $product = Product::find($id);
+
+    if (!$product) {
+        return response()->json(['message' => 'Produit non trouvé'], 404);
+    }
+
+    // Validation des données
+    $validatedData = $request->validate([
+        'reference' => 'required|string|max:255|unique:products,reference,' . $id, // Ignorer la validation de l'unicité pour l'ID actuel
+        'label' => 'required|string|max:255',
+        'category' => 'nullable|string|max:255',
+        'is_selling' => 'nullable|boolean',
+        'is_purchasing' => 'nullable|boolean',
+        'description' => 'nullable|string',
+        'public_url' => 'nullable|url',
+        'product_type' => 'nullable|string|max:100',
+        'weight' => 'nullable|numeric|min:0',
+        'length' => 'nullable|numeric|min:0',
+        'width' => 'nullable|numeric|min:0',
+        'height' => 'nullable|numeric|min:0',
+        'dimensions' => 'nullable|array',
+        'surface' => 'nullable|numeric|min:0',
+        'volume' => 'nullable|numeric|min:0',
+        'customs_code' => 'nullable|string|max:20',
+        'country_of_origin' => 'nullable|string|max:100',
+        'state_of_origin' => 'nullable|string|max:100',
+        'note' => 'nullable|string',
+        'tags' => 'nullable|array',
+        'selling_price' => 'nullable|numeric|min:0',
+        'price' => 'nullable|numeric|min:0',
+        'min_selling_price' => 'nullable|numeric|min:0',
+        'tax_rate' => 'nullable|numeric|min:0|max:100',
+    ]);
+
+    // Mise à jour des données du produit
+    $product->update([
+        'reference' => $validatedData['reference'],
+        'label' => $validatedData['label'],
+        'category' => $validatedData['category'],
+        'is_selling' => $validatedData['is_selling'],
+        'is_purchasing' => $validatedData['is_purchasing'],
+        'description' => $validatedData['description'],
+        'public_url' => $validatedData['public_url'],
+        'product_type' => $validatedData['product_type'],
+        'weight' => $validatedData['weight'],
+        'length' => $validatedData['length'],
+        'width' => $validatedData['width'],
+        'height' => $validatedData['height'],
+        'dimensions' => $validatedData['dimensions'],
+        'surface' => $validatedData['surface'],
+        'volume' => $validatedData['volume'],
+        'customs_code' => $validatedData['customs_code'],
+        'country_of_origin' => $validatedData['country_of_origin'],
+        'state_of_origin' => $validatedData['state_of_origin'],
+        'note' => $validatedData['note'],
+        'tags' => $validatedData['tags'],
+        'selling_price' => $validatedData['selling_price'],
+        'price' => $validatedData['price'],
+        'min_selling_price' => $validatedData['min_selling_price'],
+        'tax_rate' => $validatedData['tax_rate'],
+    ]);
+
+    return response()->json([
+        'message' => 'Produit mis à jour avec succès',
+        'product' => $product
+    ], 200);
+}
+public function edit($id)
+{
+    // Trouver le produit à éditer
+    $product = Product::find($id);
+
+    if (!$product) {
+        return response()->json(['message' => 'Produit non trouvé'], 404);
+    }
+
+    return response()->json([
+        'message' => 'Produit trouvé avec succès',
+        'product' => $product
+    ], 200);
+}
+
+
 }
