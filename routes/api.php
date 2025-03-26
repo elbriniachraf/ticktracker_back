@@ -2,6 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Services\TvaCalculator;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -110,3 +112,26 @@ Route::get('/files/download/{id}', [App\Http\Controllers\FileController::class, 
 Route::put('/files/rename/{id}', [App\Http\Controllers\FileController::class, 'renameFile']);
 
 Route::put('/files/favorite/{id}', [App\Http\Controllers\FileController::class, 'toggleFavorite']);
+
+Route::prefix('tva')->group(function () {
+    Route::get('/rates', [App\Http\Controllers\TvaRateController::class, 'index']);
+    Route::post('/rates', [App\Http\Controllers\TvaRateController::class, 'store']);
+    Route::put('/rates/{id}', [App\Http\Controllers\TvaRateController::class, 'update']);
+    Route::delete('/rates/{id}', [App\Http\Controllers\TvaRateController::class, 'destroy']);
+    Route::get('/rates/{id}', [App\Http\Controllers\TvaRateController::class, 'show']);
+
+});
+Route::post('/calculate-tva', [App\Http\Controllers\TvaController::class, 'calculate']);
+
+Route::get('/calculate-tva', [App\Http\Controllers\TvaController::class, 'calculate']);
+
+Route::get('/calculate-tva', function (Request $request, TvaCalculator $calculator) {
+    $ht = $request->query('ht', 100);
+    $countryCode = $request->query('country', 'FR');
+    $vatNumber = $request->query('vat', null);
+
+    return response()->json($calculator->calculate($ht, $countryCode, $vatNumber));
+});
+
+Route::get('/invoice/{invoice}', [App\Http\Controllers\InvoiceController::class, 'showInvoice'])->name('invoice.show');
+
