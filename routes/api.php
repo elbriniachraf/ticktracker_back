@@ -94,7 +94,6 @@ Route::get('/searchproducts', [App\Http\Controllers\ProductController::class, 's
 
 Route::get('/services', [App\Http\Controllers\ServiceController::class, 'index']);
 Route::post('/services/delete', [App\Http\Controllers\ServiceController::class, 'destroy'])->name('services.delete');
-Route::post('/services', [App\Http\Controllers\ServiceController::class, 'store']);
 
 
 
@@ -134,4 +133,10 @@ Route::get('/calculate-tva', function (Request $request, TvaCalculator $calculat
 });
 
 Route::get('/invoice/{invoice}', [App\Http\Controllers\InvoiceController::class, 'showInvoice'])->name('invoice.show');
+
+Route::post('/invoice-tva-history', [ App\Http\Controllers\InvoiceTvaHistoryController::class, 'store']);
+
+Route::post('/services', [App\Http\Controllers\ServiceController::class, 'store']);
+
+Route::post('/historique', [App\Http\Controllers\InvoiceTvaHistoriesController::class, 'store']);
 
